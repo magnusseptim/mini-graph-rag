@@ -114,3 +114,6 @@ var/
 - /search (text-only), then vectors (embedding column + HNSW index).
 
 - Optional: Dockerize app or use Kùzu Explorer container for browsing.
+
+## License
+[MIT](./LICENSE)
