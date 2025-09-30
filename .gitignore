@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.python-version
+
+# Virtual envs / tools
+.venv/
+.uv/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# Editors/OS
+.vscode/
+.idea/
+.DS_Store
+
+# Coverage / build
+.coverage
+htmlcov/
+dist/
+build/
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Kùzu DB artifacts
+var/*
+!var/.gitkeep
+*.kuzu
+*.kuzulog
+*.kuzu.wal
+*.kuzu.tmp
+
+# App data
+var/*
+!var/.gitkeep
+*.kuzu
+*.kuzulog
+*.kuzu.wal
+*.kuzu.tmp
+
+# Kùzu db artifacts (if any other files appear)
+*.kuzu
+*.kuzulog

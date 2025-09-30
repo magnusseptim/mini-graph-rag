@@ -1,0 +1,83 @@
+from __future__ import annotations
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException, status
+from opentelemetry import trace
+
+from app.core.tracing import init_tracing, get_tracer
+from app.api.schemas import IngestDocument
+from app.core.kuzu import ensure_database
+from app.graph.read import list_chunks
+from app.graph.schema import ensure_schema
+from app.graph.seed import seed_sample
+from app.graph.repo import document_exists, create_document, create_section, create_chunk
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    ensure_database()
+    ensure_schema()
+    yield
+
+app = FastAPI(title="Mini Graph-RAG (TerminusDB)", lifespan=lifespan)
+init_tracing(app)
+tracer = get_tracer(__name__)
+
+
+@app.get("/health")
+async def health() -> dict[str, str]:
+    with tracer.start_as_current_span("health"):
+        span = trace.get_current_span()
+        span.set_attribute("health.ok", True)
+        return {"status": "ok"}
+
+
+@app.post("/seed")
+def seed(reset: bool = True):
+    """
+    Seeds the DB with a small sample graph and returns verification counts.
+    Use `reset=false` to keep existing data.
+    """
+    return seed_sample(reset=reset)
+
+
+@app.get("/chunks")
+def get_chunks(limit: int = 100, doc: str | None = None):
+    """
+    List chunks with their section & document.
+    Optional: filter by document title via ?doc=Sample%20Doc
+    """
+    items = list_chunks(limit=limit, doc_title=doc)
+    return {"count": len(items), "items": items}
+
+
+@app.post("/ingest", status_code=status.HTTP_201_CREATED)
+def ingest(doc: IngestDocument):
+    """
+    Create a new Document with Sections/Chunks.
+    If a Document with the same title exists -> 409 Conflict (no changes).
+    Section/chunk order is taken from the input list order.
+    """
+    if document_exists(doc.title):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Document with title '{doc.title}' already exists",
+        )
+
+    doc_id = create_document(doc.title)
+    section_ids: list[int] = []
+    chunk_ids: list[int] = []
+
+    for i, sec in enumerate(doc.sections):
+        sid = create_section(doc_id, sec.title, i)
+        section_ids.append(sid)
+        for j, text in enumerate(sec.chunks):
+            cid = create_chunk(sid, text, j)
+            chunk_ids.append(cid)
+
+    return {
+        "document_id": doc_id,
+        "section_ids": section_ids,
+        "chunk_ids": chunk_ids,
+        "sections_created": len(section_ids),
+        "chunks_created": len(chunk_ids),
+    }
