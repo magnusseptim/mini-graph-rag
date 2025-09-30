@@ -101,7 +101,7 @@ var/
 
 - Reserved words: avoid ```order```; use ord (or backticks).
 
-### Troubleshooting
+## Troubleshooting
 **Stuck at “Waiting for application startup.”?**
 - Kill stray servers: `ps aux | rg uvicorn` then `kill -9 <pid>`
 - Remove local DB artifacts:  
