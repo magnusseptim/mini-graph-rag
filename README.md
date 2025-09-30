@@ -35,11 +35,11 @@ uv run uvicorn app.api.routes:app --reload --host 0.0.0.0 --port 8000
 
 - GET /health → {"status":"ok"}
 - POST /seed?reset=true|false
-Seeds a small sample graph. Idempotent (checks for "Sample Doc").
+  - Seeds a small sample graph. Idempotent (checks for "Sample Doc").
 - GET /chunks?doc=title&limit=100
-Lists chunks with their section & document context.
+  - Lists chunks with their section & document context.
 - POST /ingest (409 on duplicate title).
-Request body:
+  - Request body:
 
 ```json
 {
