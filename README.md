@@ -4,6 +4,9 @@
 
 # Mini Graph-RAG (Kùzu + FastAPI)
 
+[![CI](https://github.com/<magnusseptim/mini-graph-rag/actions/workflows/ci.yml/badge.svg)](https://github.com/magnusseptim/mini-graph-rag/actions/workflows/ci.yml)
+
+
 Tiny, teachable Graph-RAG starter that stores a `Document → Section → Chunk` graph in
 the embedded **Kùzu** database and exposes simple endpoints for seeding, ingesting,
 and listing chunks.
