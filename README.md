@@ -33,12 +33,12 @@ uv run uvicorn app.api.routes:app --reload --host 0.0.0.0 --port 8000
 
 ## API
 
-- GET /health → {"status":"ok"}
-- POST /seed?reset=true|false
+- **GET** `/health` → {"status":"ok"}
+- **POST** `/seed?reset=true|false`
   - Seeds a small sample graph. Idempotent (checks for "Sample Doc").
-- GET /chunks?doc=title&limit=100
+- **GET** `/chunks?doc=title&limit=100`
   - Lists chunks with their section & document context.
-- POST /ingest (409 on duplicate title).
+- **POST** `/ingest` (409 on duplicate title).
   - Request body:
 
 ```json
@@ -51,6 +51,8 @@ uv run uvicorn app.api.routes:app --reload --host 0.0.0.0 --port 8000
 }
 
 ```
+- **GET** `/search?q=<text>&doc=<title>&limit=20`  
+  Case-insensitive substring search in `Chunk.text`. Optional `doc` to restrict to a document.
 
 ## Example calls
 
@@ -87,10 +89,15 @@ app/
   graph/
     schema.py
     seed.py
+    search.py
     repo.py
     read.py
 var/
   .gitkeep
+docs/
+tests
+  conftest.py
+  test_smoke.py
 
 ```
 

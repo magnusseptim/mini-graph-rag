@@ -10,6 +10,7 @@ from app.graph.read import list_chunks
 from app.graph.schema import ensure_schema
 from app.graph.seed import seed_sample
 from app.graph.repo import document_exists, create_document, create_section, create_chunk
+from app.graph.search import search_chunks
 
 
 @asynccontextmanager
@@ -81,3 +82,18 @@ def ingest(doc: IngestDocument):
         "sections_created": len(section_ids),
         "chunks_created": len(chunk_ids),
     }
+
+
+@app.get("/search")
+def search(q: str, doc: str | None = None, limit: int = 20):
+    """
+    Case-insensitive substring search in Chunk.text.
+    Optional: restrict to a document via ?doc=Title
+    """
+    if not q:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Query parameter 'q' is required",
+        )
+    items = search_chunks(q=q, doc_title=doc, limit=limit)
+    return {"count": len(items), "items": items}

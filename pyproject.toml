@@ -1,0 +1,24 @@
+# pyproject.toml
+[project]
+name = "mini-graph-rag"
+version = "0.1.0"
+description = "Mini Graph-RAG starter using Kùzu + FastAPI"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "magnusseptim" }]
+dependencies = [
+    "fastapi>=0.116.1",
+    "kuzu>=0.11.2",
+    "opentelemetry-exporter-otlp>=1.37.0",
+    "opentelemetry-instrumentation-fastapi>=0.58b0",
+    "opentelemetry-instrumentation-logging>=0.58b0",
+    "opentelemetry-sdk>=1.37.0",
+    "uvicorn[pstandard,standard]>=0.35.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=8.4.2",
+]

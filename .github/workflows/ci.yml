@@ -1,0 +1,30 @@
+name: CI
+
+on:
+    push:
+    pull_request:
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            
+            - name: Setup Python
+              uses: actions/setup-python@v5
+              with:
+                python-version: "3.11"
+                
+            - name: Install uv
+              run: |
+                curl -LsSf https://astral.sh/uv/install.sh | sh
+                echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+            - name: Sync deps (with dev)
+              run: uv sync --dev
+
+            - name: Run tests
+              env:
+                KUZU_DB_PATH: ./var/ci.kuzu
+              run: uv run pytest -q
