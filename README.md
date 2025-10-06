@@ -4,7 +4,7 @@
 
 # Mini Graph-RAG (Kùzu + FastAPI)
 
-[![CI](https://github.com/magnusseptim/mini-graph-rag/actions/workflows/ci.yml/badge.svg)](https://github.com/magnusseptim/mini-graph-rag/actions/workflows/ci.yml)
+[![CI](https://github.com/magnusseptim/mini-graph-rag/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/magnusseptim/mini-graph-rag/actions/workflows/ci.yml)
 
 
 Tiny, teachable Graph-RAG starter that stores a `Document → Section → Chunk` graph in
@@ -18,6 +18,14 @@ and listing chunks.
 
 ## Quickstart
 
+### Make targets
+- `make run` — start FastAPI (reload on code; ignores DB dir)
+- `make seed` — seed sample data
+- `make chunks` — list chunks
+- `make ingest` — demo ingest request
+- `make test` — run pytest via uv
+- `make clean-db` — delete local Kùzu artifacts (WAL/DB)
+
 ### Requirements
 - Python 3.11+
 - [uv](https://github.com/astral-sh/uv)
@@ -28,6 +36,16 @@ uv sync
 uv run uvicorn app.api.routes:app --reload --host 0.0.0.0 --port 8000
 ```
 
+### Dev workflow
+```bash
+# Install deps (incl. dev)
+uv sync --dev
+
+# Run tests (same as CI)
+uv run pytest -q
+
+```
+
 ## Config (env vars)
 
 - KUZU_DB_PATH (default: ./var/mini-graph-rag.kuzu)
@@ -36,26 +54,14 @@ uv run uvicorn app.api.routes:app --reload --host 0.0.0.0 --port 8000
 
 ## API
 
-- **GET** `/health` → {"status":"ok"}
-- **POST** `/seed?reset=true|false`
-  - Seeds a small sample graph. Idempotent (checks for "Sample Doc").
-- **GET** `/chunks?doc=title&limit=100`
-  - Lists chunks with their section & document context.
-- **POST** `/ingest` (409 on duplicate title).
-  - Request body:
+| Method | Path                                           | Description |
+|-------:|------------------------------------------------|-------------|
+| GET    | `/health`                                      | Health check. |
+| POST   | `/seed?reset=true\|false`                      | Seed sample data (idempotent if `reset=false`). |
+| POST   | `/ingest`                                      | Create a document with sections/chunks. Returns 409 if title exists. |
+| GET    | `/chunks?doc=<title>&limit=<n>`                | List chunks (with optional doc filter). |
+| GET    | `/search?q=<text>&doc=<title>&limit=<n>&ci=bool` | **Substring search** in `Chunk.text`. `ci=true` (default) is **case-insensitive**; pass `ci=false` for case-sensitive. |
 
-```json
-{
-  "title": "Kickoff Notes",
-  "sections": [
-    {"title": "Intro", "chunks": ["hi", "agenda"]},
-    {"title": "Body",  "chunks": ["topic A", "topic B", "Q&A"]}
-  ]
-}
-
-```
-- **GET** `/search?q=<text>&doc=<title>&limit=20`  
-  Case-insensitive substring search in `Chunk.text`. Optional `doc` to restrict to a document.
 
 ## Example calls
 
@@ -76,6 +82,12 @@ curl -s -X POST http://localhost:8000/ingest \
         {"title":"Intro","chunks":["hi","agenda"]},
         {"title":"Body","chunks":["topic A","topic B","Q&A"]}
       ]}' | jq
+
+# Case-insensitive (default)
+curl -s "http://127.0.0.1:8000/search?q=topic&doc=Kickoff%20Notes" | jq
+
+# Case-sensitive
+curl -s "http://127.0.0.1:8000/search?q=TOPIC&doc=Kickoff%20Notes&ci=false" | jq
 ```
 
 ## Project structure (trimmed)
@@ -112,16 +124,16 @@ tests
 - Reserved words: avoid ```order```; use ord (or backticks).
 
 ## Troubleshooting
-**Stuck at “Waiting for application startup.”?**
-- Kill stray servers: `ps aux | rg uvicorn` then `kill -9 <pid>`
-- Remove local DB artifacts:  
+
+**Stuck at “Waiting for application startup.”?**  
+- Remove local DB artifacts (esp. WAL):  
   `rm -f var/*.kuzu var/*.kuzulog var/*.kuzu.wal var/*.kuzu.tmp`
-- Start dev server excluding DB dir from reload:  
+- Start dev server excluding DB directory from reload:  
   `uv run uvicorn app.api.routes:app --reload --reload-exclude var/* --port 8000`
 
 ## Roadmap
 
-- /search (text-only), then vectors (embedding column + HNSW index).
+- vectors (embedding column + HNSW index).
 
 - Optional: Dockerize app or use Kùzu Explorer container for browsing.
 
