@@ -85,9 +85,10 @@ def ingest(doc: IngestDocument):
 
 
 @app.get("/search")
-def search(q: str, doc: str | None = None, limit: int = 20):
+def search(q: str, doc: str | None = None, limit: int = 20, ci: bool = True):
     """
-    Case-insensitive substring search in Chunk.text.
+    Case-insensitive substring search in Chunk.text by default (ci=true).
+    Pass ci=false for case-sensitive search.
     Optional: restrict to a document via ?doc=Title
     """
     if not q:
@@ -95,5 +96,5 @@ def search(q: str, doc: str | None = None, limit: int = 20):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Query parameter 'q' is required",
         )
-    items = search_chunks(q=q, doc_title=doc, limit=limit)
+    items = search_chunks(q=q, doc_title=doc, limit=limit, case_insensitive=ci)
     return {"count": len(items), "items": items}

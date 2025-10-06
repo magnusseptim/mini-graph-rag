@@ -1,10 +1,22 @@
 from __future__ import annotations
+import re
 from typing import Any, Mapping, Sequence, cast
 from app.core.kuzu import get_conn
 from app.graph.seed import _as_qr
 
 
-def search_chunks(q: str, doc_title: str | None = None, limit: int = 10) -> list[dict[str, Any]]:
+def _pattern(q: str, ci: bool) -> str:
+    # Safe substring pattern; (?i) enables case-insensitive when requested
+    core = re.escape(q)
+    return (f"(?i).*{core}.*") if ci else (f".*{core}.*")
+
+
+def search_chunks(
+    q: str,
+    doc_title: str | None = None,
+    limit: int = 20,
+    case_insensitive: bool = True,
+) -> list[dict[str, Any]]:
     """
     Search chunks by text, optionally filtering by document title.
     Case-insensitive substring match.
@@ -13,11 +25,16 @@ def search_chunks(q: str, doc_title: str | None = None, limit: int = 10) -> list
     if limit <= 0:
         limit = 20
 
-    where_parts = ["c.text CONTAINS $q"]
-    params: dict[str, Any] = {"q": q, "lim": int(limit)}
+    params: dict[str, Any] = {
+        "pat": _pattern(q, case_insensitive),
+        "lim": int(limit),
+    }
+
+    where_parts = ["c.text =~ $pat"]
     if doc_title:
         where_parts.append("d.title = $t")
         params["t"] = doc_title
+
     where = "WHERE " + " AND ".join(where_parts)
 
     qtext = f"""
