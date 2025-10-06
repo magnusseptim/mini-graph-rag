@@ -79,7 +79,6 @@ def test_search_substring(client):
     texts = [item["text"] for item in data["items"]]
     assert "topic A" in texts and "topic B" in texts
 
-
 def test_search_case_insensitive(client):
     # clean DB, then ingest a known doc
     client.post("/seed", params={"reset": True})
