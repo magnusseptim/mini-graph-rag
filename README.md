@@ -135,7 +135,7 @@ tests
 
 ## Roadmap
 
-- vectors (embedding column + HNSW index).
+- Vectors endpoint
 
 - Optional: Dockerize app or use Kùzu Explorer container for browsing.
 
