@@ -23,6 +23,7 @@ and listing chunks.
 - `make seed` — seed sample data
 - `make chunks` — list chunks
 - `make ingest` — demo ingest request
+- `make indexes` — debug vector indexes
 - `make test` — run pytest via uv
 - `make clean-db` — delete local Kùzu artifacts (WAL/DB)
 
@@ -61,6 +62,7 @@ uv run pytest -q
 | POST   | `/ingest`                                      | Create a document with sections/chunks. Returns 409 if title exists. |
 | GET    | `/chunks?doc=<title>&limit=<n>`                | List chunks (with optional doc filter). |
 | GET    | `/search?q=<text>&doc=<title>&limit=<n>&ci=bool` | **Substring search** in `Chunk.text`. `ci=true` (default) is **case-insensitive**; pass `ci=false` for case-sensitive. |
+| GET    | `/debug/indexes`                               | lists indexes via `CALL SHOW_INDEXES()`. Quick check locally: `make indexes` |
 
 
 ## Example calls
