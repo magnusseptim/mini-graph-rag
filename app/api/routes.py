@@ -1,14 +1,15 @@
 from __future__ import annotations
 from contextlib import asynccontextmanager
+from typing import Mapping
 from fastapi import FastAPI, HTTPException, status
 from opentelemetry import trace
 
 from app.core.tracing import init_tracing, get_tracer
 from app.api.schemas import IngestDocument
-from app.core.kuzu import ensure_database
+from app.core.kuzu import ensure_database, get_conn
 from app.graph.read import list_chunks
-from app.graph.schema import ensure_schema
-from app.graph.seed import seed_sample
+from app.graph.schema import ensure_schema, ensure_vector_schema
+from app.graph.seed import _as_qr, seed_sample
 from app.graph.repo import document_exists, create_document, create_section, create_chunk
 from app.graph.search import search_chunks
 
@@ -17,6 +18,7 @@ from app.graph.search import search_chunks
 async def lifespan(app: FastAPI):
     ensure_database()
     ensure_schema()
+    ensure_vector_schema()
     yield
 
 app = FastAPI(title="Mini Graph-RAG (TerminusDB)", lifespan=lifespan)
@@ -98,3 +100,26 @@ def search(q: str, doc: str | None = None, limit: int = 20, ci: bool = True):
         )
     items = search_chunks(q=q, doc_title=doc, limit=limit, case_insensitive=ci)
     return {"count": len(items), "items": items}
+
+
+@app.get("/debug/indexes")
+def debug_indexes():
+    """
+    Show existing indexes.
+    """
+    res = _as_qr(get_conn().execute("CALL SHOW_INDEXES() RETURN *"))
+    out = []
+    while res.has_next():
+        row = res.get_next()
+        if isinstance(row, Mapping):
+            out.append(dict(row))
+        else:
+            out.append({
+                "table name": row[0],
+                "index name": row[1],
+                "index type": row[2],
+                "property names": row[3],
+                "extension loaded": row[4],
+                "index definition": row[5],
+            })
+    return {"indexes": out}

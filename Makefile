@@ -18,6 +18,10 @@ ingest:
 	  -H "Content-Type: application/json" \
 	  -d '{"title":"Kickoff Notes","sections":[{"title":"Intro","chunks":["hi","agenda"]},{"title":"Body","chunks":["topic A","topic B","Q&A"]}]}' | jq
 
+# Debug Vector Indexes
+indexes:
+	curl -s "http://127.0.0.1:8000/debug/indexes" | jq
+
 # Run tests via uv (matches CI)
 test:
 	uv run pytest -q
