@@ -6,12 +6,14 @@ from opentelemetry import trace
 
 from app.core.tracing import init_tracing, get_tracer
 from app.api.schemas import IngestDocument
+from app.api.models import SemanticQuery
 from app.core.kuzu import ensure_database, get_conn
 from app.graph.read import list_chunks
 from app.graph.schema import ensure_schema, ensure_vector_schema
 from app.graph.seed import _as_qr, seed_sample
 from app.graph.repo import document_exists, create_document, create_section, create_chunk
 from app.graph.search import search_chunks
+from app.graph.semantic import _one_hot, semantic_search
 
 
 @asynccontextmanager
@@ -102,6 +104,25 @@ def search(q: str, doc: str | None = None, limit: int = 20, ci: bool = True):
     return {"count": len(items), "items": items}
 
 
+@app.post("/search/semantic")
+def search_semantic(body: SemanticQuery):
+    """Perform a semantic search over chunks using the provided vector.
+
+    Args:
+        body (SemanticQuery): The semantic query parameters.
+
+    Returns:
+        dict: The search results.
+    """
+    items = semantic_search(
+        vector=body.vector,
+        k=body.k,
+        efs=body.efs,
+        doc_title=body.doc
+    )
+    return {"count": len(items), "items": items}
+
+
 @app.get("/debug/indexes")
 def debug_indexes():
     """
@@ -123,3 +144,29 @@ def debug_indexes():
                 "index definition": row[5],
             })
     return {"indexes": out}
+
+
+@app.get("debug/set-dummy-embeddings")
+def set_dummy_embeddings() -> dict[str, int]:
+    """
+    Assigns a simple one-hot embedding to every chunk: index = chunk_ord % DIM.
+    Useful to prove the vector index end-to-end without external models.
+    """
+    conn = get_conn()
+    res = _as_qr(conn.execute("""
+        MATCH (d:Document)-[:ContainsDocSection]->(s:Section)-[:ContainsSectionChunk]->(c:Chunk)
+        RETURN c.id AS id, c.ord AS ord
+        ORDER BY id
+    """))
+    updated = 0
+    while res.has_next():
+        row = res.get_next()
+        chunk_id = row["id"] if isinstance(row, Mapping) else row[0]
+        ord_ = row["ord"] if isinstance(row, Mapping) else row[1]
+        vec = _one_hot(int(ord_))
+        conn.execute("""
+            MATCH (c:Chunk) WHERE c.id = $id
+            SET c.embedding = $vec
+        """, {"id": int(chunk_id), "vec": vec})
+        updated += 1
+    return {"updated": updated}

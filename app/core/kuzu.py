@@ -1,11 +1,13 @@
 from __future__ import annotations
 from pathlib import Path
+import threading
 import kuzu
 from app.core.config import settings
 from app.core.tracing import get_tracer
 
 tracer = get_tracer(__name__)
 _db: kuzu.Database | None = None
+_db_lock = threading.Lock()
 
 
 def get_db() -> kuzu.Database:
@@ -15,9 +17,10 @@ def get_db() -> kuzu.Database:
         kuzu.Database: Kuzu database
     """
     global _db
-    if _db is None:
-        Path(settings.kuzu_db_path).parent.mkdir(parents=True, exist_ok=True)
-        _db = kuzu.Database(settings.kuzu_db_path)
+    with _db_lock:
+        if _db is None:
+            Path(settings.kuzu_db_path).parent.mkdir(parents=True, exist_ok=True)
+            _db = kuzu.Database(settings.kuzu_db_path)
     return _db
 
 
