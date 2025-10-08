@@ -27,3 +27,10 @@ class EchoResponse(BaseModel):
             length=len(text),
             received_at=datetime.now(timezone.utc).isoformat()
         )
+
+
+class SemanticQuery(BaseModel):
+    vector: list[float] = Field(min_length=1)  # we'll validate exact size
+    k: int = 5
+    efs: int = 200
+    doc: str | None = None

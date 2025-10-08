@@ -24,6 +24,8 @@ and listing chunks.
 - `make chunks` — list chunks
 - `make ingest` — demo ingest request
 - `make indexes` — debug vector indexes
+- `make seed-emb` — call the debug helper to populate deterministic embeddings
+- `make semantic` — run a simple semantic search with a one-hot query vector (index 0)
 - `make test` — run pytest via uv
 - `make clean-db` — delete local Kùzu artifacts (WAL/DB)
 
@@ -62,6 +64,10 @@ uv run pytest -q
 | POST   | `/ingest`                                      | Create a document with sections/chunks. Returns 409 if title exists. |
 | GET    | `/chunks?doc=<title>&limit=<n>`                | List chunks (with optional doc filter). |
 | GET    | `/search?q=<text>&doc=<title>&limit=<n>&ci=bool` | **Substring search** in `Chunk.text`. `ci=true` (default) is **case-insensitive**; pass `ci=false` for case-sensitive. |
+| POST | `/search/semantic` — body: `{"vector":[...384 floats...], "k":5, "efs":200, "doc":"Title?"}` | Uses Kùzu’s `QUERY_VECTOR_INDEX` with HNSW (two hierarchical layers: upper sampled, lower full) and returns nearest chunks + distance. :contentReference[oaicite:3]{index=3} |
+| POST | `/debug/set_dummy_embeddings` | — writes simple one-hot vectors into `Chunk.embedding` so you can prove semantic search without external models. Then try:
+  - `make seed-emb`
+  - `make semantic`|
 | GET    | `/debug/indexes`                               | lists indexes via `CALL SHOW_INDEXES()`. Quick check locally: `make indexes` |
 
 
@@ -134,8 +140,6 @@ tests
   `uv run uvicorn app.api.routes:app --reload --reload-exclude var/* --port 8000`
 
 ## Roadmap
-
-- Vectors endpoint
 
 - Optional: Dockerize app or use Kùzu Explorer container for browsing.
 
