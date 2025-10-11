@@ -9,7 +9,7 @@ license = { text = "MIT" }
 authors = [{ name = "magnusseptim" }]
 dependencies = [
     "fastapi>=0.116.1",
-    "kuzu>=0.11.2",
+    "kuzu>=0.11.3,<0.12",
     "opentelemetry-exporter-otlp>=1.37.0",
     "opentelemetry-instrumentation-fastapi>=0.58b0",
     "opentelemetry-instrumentation-logging>=0.58b0",
