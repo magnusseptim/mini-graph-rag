@@ -20,13 +20,16 @@ jobs:
                 python-version: "3.11"
                 
             - name: Setup uv
-              uses: astral-sh/setup-uv@v4
+              uses: astral-sh/setup-uv@v6
               with:
                 enable-cache: true
                 cache-dependency-glob: |
                   **/*requirements*.txt
                   **/pyproject.toml
                   **/uv.lock
+
+            - name: Print whether cache restored
+              run: echo "cache-hit=${{ steps.py.outputs.cache-hit }}"
 
             - name: Install (dev)
               run: uv sync --dev
