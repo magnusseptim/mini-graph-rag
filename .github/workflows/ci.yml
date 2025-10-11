@@ -2,7 +2,9 @@ name: CI
 
 on:
     push:
+      branches: [master]
     pull_request:
+      branches: [master]
 
 jobs:
     test:
@@ -13,15 +15,28 @@ jobs:
             
             - name: Setup Python
               uses: actions/setup-python@v5
+              id: py
               with:
                 python-version: "3.11"
                 
-            - name: Install uv
-              run: |
-                curl -LsSf https://astral.sh/uv/install.sh | sh
-                echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+            - name: Setup uv
+              uses: astral-sg/setup-uv@v4
 
-            - name: Sync deps (with dev)
+            - name : Show uv cache dir
+              run: uv cache dir
+
+            - name: Cache uv
+              uses: actions/cache@v4
+              with:
+                path: ~/.cache/uv
+                key: >-
+                  uv-${{ runner.os }}-py${{ steps.py.outputs.python-version }}-
+                  ${{ hashFiles('**/uv.lock', '**/pyproject.toml', '**/requirements*.txt') }}
+                restore-keys: |
+                  uv-${{ runner.os }}-py${{ steps.py.outputs.python-version }}-
+                  uv-${{ runner.os }}-
+
+            - name: Install (dev)
               run: uv sync --dev
 
             - name: Run tests
