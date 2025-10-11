@@ -20,7 +20,7 @@ jobs:
                 python-version: "3.11"
                 
             - name: Setup uv
-              uses: astral-sg/setup-uv@v4
+              uses: astral-sh/setup-uv@v4
 
             - name : Show uv cache dir
               run: uv cache dir
