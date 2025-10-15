@@ -5,6 +5,10 @@ from app.graph.seed import _as_qr
 
 DIM: int = 384  # must match FLOAT[384] in Chunk.embedding
 
+INDEX_TBL = "Chunk"
+INDEX_NAME = "chunk_embedding_idx"
+INDEX_COL = "embedding"
+
 
 def _one_hot(i: int, dim: int = DIM) -> list[float]:
     """Generate a one-hot encoded vector.
@@ -23,9 +27,10 @@ def _one_hot(i: int, dim: int = DIM) -> list[float]:
 
 def semantic_search(
     vector: list[float],
-    k: int = 5, efs:
-        int = 200,
-        doc_title: str | None = None) -> list[dict[str, Any]]:
+    k: int = 5,
+    efs: int = 200,
+    doc_title: str | None = None,
+) -> list[dict[str, Any]]:
     """Perform a semantic search over chunks using the provided vector."""
 
     if len(vector) != DIM:
@@ -38,8 +43,8 @@ def semantic_search(
         params["t"] = doc_title
 
     q = f"""
-    CALL QUERY_VECTOR_INDEX('Chunk', 'chunk_embedding_idx', $vec, $k, efs := $efs)
-    WHICH node AS c, distance
+    CALL QUERY_VECTOR_INDEX('Chunk', '{INDEX_NAME}', $vec, $k, efs := $efs)
+    WITH node AS c, distance
     MATCH (d:Document)-[:ContainsDocSection]->(s:Section)-[:ContainsSectionChunk]->(c)
     {where}
      RETURN
@@ -85,3 +90,25 @@ def semantic_search(
             })
 
     return out
+
+
+def drop_vector_index_if_exists() -> None:
+    """
+    Drop the vector index if it exists.
+    """
+    conn = get_conn()
+    try:
+        conn.execute(f"CALL DROP_INDEX('{INDEX_TBL}', '{INDEX_NAME}');")
+    except Exception:
+        pass  # index does not exist
+
+
+def create_vector_index() -> None:
+    """
+    Create the vector index if it does not exist.
+    """
+    conn = get_conn()
+    try:
+        conn.execute(f"CALL CREATE_VECTOR_INDEX('{INDEX_TBL}', '{INDEX_NAME}', '{INDEX_COL}', metric := 'cosine')")
+    except Exception:
+        pass  # index already exists
