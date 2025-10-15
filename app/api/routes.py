@@ -13,7 +13,7 @@ from app.graph.schema import ensure_schema, ensure_vector_schema
 from app.graph.seed import _as_qr, seed_sample
 from app.graph.repo import document_exists, create_document, create_section, create_chunk
 from app.graph.search import search_chunks
-from app.graph.semantic import _one_hot, semantic_search
+from app.graph.semantic import _one_hot, create_vector_index, drop_vector_index_if_exists, semantic_search
 
 
 @asynccontextmanager
@@ -146,13 +146,16 @@ def debug_indexes():
     return {"indexes": out}
 
 
-@app.get("debug/set-dummy-embeddings")
+@app.post("/debug/set_dummy_embeddings")
 def set_dummy_embeddings() -> dict[str, int]:
     """
     Assigns a simple one-hot embedding to every chunk: index = chunk_ord % DIM.
     Useful to prove the vector index end-to-end without external models.
     """
     conn = get_conn()
+
+    drop_vector_index_if_exists()
+
     res = _as_qr(conn.execute("""
         MATCH (d:Document)-[:ContainsDocSection]->(s:Section)-[:ContainsSectionChunk]->(c:Chunk)
         RETURN c.id AS id, c.ord AS ord
@@ -169,4 +172,7 @@ def set_dummy_embeddings() -> dict[str, int]:
             SET c.embedding = $vec
         """, {"id": int(chunk_id), "vec": vec})
         updated += 1
+
+    create_vector_index()
+
     return {"updated": updated}

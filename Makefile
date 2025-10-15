@@ -28,20 +28,7 @@ seed-emb:
 
 # run a simple semantic search with a one-hot query vector (index 0)
 semantic:
-	python - <<'PY'
-DIM=384
-vec=[0.0]*DIM
-vec[0]=1.0
-import json, sys, urllib.request
-req=urllib.request.Request(
-    "http://127.0.0.1:8000/search/semantic",
-    data=json.dumps({"vector":vec,"k":3,"efs":200}).encode(),
-    headers={"Content-Type":"application/json"},
-    method="POST"
-)
-with urllib.request.urlopen(req) as r:
-    print(r.read().decode())
-PY
+	uv run python -c "import json,urllib.request; vec=[0.0]*384; vec[0]=1.0; req=urllib.request.Request('http://127.0.0.1:8000/search/semantic', data=json.dumps({'vector':vec,'k':3,'efs':200}).encode(), headers={'Content-Type':'application/json'}, method='POST'); print(urllib.request.urlopen(req).read().decode())"
 
 # Run tests via uv (matches CI)
 test:
