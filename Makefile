@@ -40,3 +40,27 @@ clean-db:
 
 # Alias for CI locally
 ci: test
+
+IMAGE ?= mini-graph-rag
+TAG ?= latest
+
+.PHONY: docker-build docker-run docker-clean docker-shell
+
+docker-build:
+	docker build -t $(IMAGE):$(TAG) .
+
+# Mount ./var -> /data so DB persists across runs
+docker-run:
+	docker run --rm -it \
+	  -p 8000:8000 \
+	  -e KUZU_DB_PATH=/data/mini-graph-rag.kuzu \
+	  -v $(PWD)/var:/data \
+	  --name $(IMAGE) \
+	  $(IMAGE):$(TAG)
+
+docker-shell:
+	docker exec -it $(IMAGE) /bin/bash
+
+docker-clean:
+	- docker rm -f $(IMAGE) 2>/dev/null || true
+	- docker rmi $(IMAGE):$(TAG) 2>/dev/null || true

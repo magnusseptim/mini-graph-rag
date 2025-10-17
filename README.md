@@ -18,6 +18,20 @@ and listing chunks.
 
 ## Quickstart
 
+### Docker (one-liner)
+
+```bash
+make docker-build
+make docker-run
+# In another terminal:
+curl -s http://127.0.0.1:8000/health
+make seed
+make chunks
+make seed-emb
+make semantic
+
+```
+
 ### Make targets
 - `make run` — start FastAPI (reload on code; ignores DB dir)
 - `make seed` — seed sample data
@@ -135,9 +149,12 @@ curl -s "http://127.0.0.1:8000/search?q=TOPIC&doc=Kickoff%20Notes&ci=false" | jq
 - Start dev server excluding DB directory from reload:  
   `uv run uvicorn app.api.routes:app --reload --reload-exclude var/* --port 8000`
 
-## Roadmap
+### Known issues
 
-- Optional: Dockerize app or use Kùzu Explorer container for browsing.
+- In Docker, `/debug/set_dummy_embeddings` may fail with:  
+  `Cannot set property vec in table embeddings ... used in one or more indexes.`  
+  Locally it seems to works (or at least worked earlier). Will be addressed next (lets hope so :D)
+
 
 ## License
 [MIT](./LICENSE)
