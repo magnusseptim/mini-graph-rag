@@ -93,15 +93,12 @@ def semantic_search(
 
 
 def drop_vector_index_if_exists() -> None:
-    """
-    Drop the vector index if it exists.
-    """
     conn = get_conn()
     try:
-        conn.execute(f"CALL DROP_INDEX('{INDEX_TBL}', '{INDEX_NAME}');")
+        # note: no trailing semicolon
+        conn.execute(f"CALL DROP_INDEX('{INDEX_TBL}', '{INDEX_NAME}')")
     except Exception:
-        pass  # index does not exist
-
+        pass
 
 def create_vector_index() -> None:
     """

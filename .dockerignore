@@ -1,0 +1,32 @@
+# VCS & editor
+.git
+.gitignore
+.github
+.vscode
+.idea
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache
+.mypy_cache
+.venv
+.env
+.env.*
+
+# Local DB artifacts
+var/
+*.kuzu
+*.kuzulog
+*.kuzu.wal
+*.kuzu.tmp
+
+# Build noise
+dist/
+build/
+*.egg-info/
+
+# Misc
+docs/banner*.png
