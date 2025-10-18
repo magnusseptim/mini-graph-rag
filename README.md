@@ -151,9 +151,10 @@ curl -s "http://127.0.0.1:8000/search?q=TOPIC&doc=Kickoff%20Notes&ci=false" | jq
 
 ### Known issues
 
-- In Docker, `/debug/set_dummy_embeddings` may fail with:  
-  `Cannot set property vec in table embeddings ... used in one or more indexes.`  
-  Locally it seems to works (or at least worked earlier). Will be addressed next (lets hope so :D)
+- In Docker, `/debug/set_dummy_embeddings` can fail with:
+  `Cannot set property vec in table embeddings ... used in one or more indexes.`
+  Locally it seems to work. This is most probably due to updating a vector property while its HNSW index is live.
+  Workarounds: run locally (`make seed-emb`) or seed before creating the index.
 
 
 ## License

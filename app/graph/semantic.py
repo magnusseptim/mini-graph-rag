@@ -100,6 +100,7 @@ def drop_vector_index_if_exists() -> None:
     except Exception:
         pass
 
+
 def create_vector_index() -> None:
     """
     Create the vector index if it does not exist.
