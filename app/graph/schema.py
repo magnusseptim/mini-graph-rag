@@ -1,8 +1,6 @@
 from __future__ import annotations
-from typing import Sequence, Mapping
 from app.core.kuzu import get_conn
 from app.core.tracing import get_tracer
-from app.graph.seed import _as_qr
 
 tracer = get_tracer(__name__)
 
@@ -68,42 +66,3 @@ def ensure_schema() -> None:
                 if "already exists" in msg or "is already installed" in msg:
                     continue
                 raise
-
-        try:
-            conn.execute(
-                "CALL CREATE_VECTOR_INDEX('Chunk','chunk_embedding_idx','embedding', metric := 'cosine');"
-                )
-        except Exception:
-            pass  # index already exists
-
-
-def ensure_vector_schema() -> None:
-    """
-    Add Chunk.embedding and create vector index if missing.
-    """
-    conn = get_conn()
-    _ensure_vector_loaded()
-
-    conn.execute("ALTER TABLE Chunk ADD IF NOT EXISTS embedding FLOAT[384];")
-
-    idx_name = "chunk_embedding_idx"
-    res = _as_qr(conn.execute("CALL SHOW_INDEXES() RETURN *"))
-
-    exist = False
-    while res.has_next():
-        row = res.get_next()
-        if isinstance(row, Mapping):
-            table = row["table name"]
-            name = row["index name"]
-        else:
-            seq = row if isinstance(row, Sequence) else []
-            table = seq[0] if len(seq) > 0 else None
-            name = seq[1] if len(seq) > 1 else None
-        if str(table).lower() == "chunk" and str(name).lower() == idx_name:
-            exist = True
-            break
-
-    if not exist:
-        conn.execute(
-            "CALL CREATE_VECTOR_INDEX('Chunk','chunk_embedding_idx','embedding', metric := 'cosine');"
-        )
