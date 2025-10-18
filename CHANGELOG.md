@@ -8,5 +8,6 @@
 - Dockerfile + Make targets (`docker-build`, `docker-run`).
 - README Quickstart, API table, troubleshooting.
 
-**Known issue**
-- In Docker, `/debug/set_dummy_embeddings` may fail when the vector index is live (works locally). See README.
+### Known issue / workaround
+- If `/debug/set_dummy_embeddings` fails with:
+  `Cannot set property vec in table embeddings … used in one or more indexes`, you likely have a **stale local DB** with an old vector index. Run `make clean-db`, then `make seed` → `make seed-emb`. The index is created after embeddings are written.

@@ -9,7 +9,7 @@ from app.api.schemas import IngestDocument
 from app.api.models import SemanticQuery
 from app.core.kuzu import ensure_database, get_conn
 from app.graph.read import list_chunks
-from app.graph.schema import ensure_schema, ensure_vector_schema
+from app.graph.schema import ensure_schema
 from app.graph.seed import _as_qr, seed_sample
 from app.graph.repo import document_exists, create_document, create_section, create_chunk
 from app.graph.search import search_chunks
@@ -20,7 +20,6 @@ from app.graph.semantic import _one_hot, create_vector_index, drop_vector_index_
 async def lifespan(app: FastAPI):
     ensure_database()
     ensure_schema()
-    ensure_vector_schema()
     yield
 
 app = FastAPI(title="Mini Graph-RAG (TerminusDB)", lifespan=lifespan)
@@ -154,7 +153,7 @@ def set_dummy_embeddings() -> dict[str, int]:
     """
     conn = get_conn()
 
-    drop_vector_index_if_exists()
+    drop_vector_index_if_exists(conn)
 
     res = _as_qr(conn.execute("""
         MATCH (d:Document)-[:ContainsDocSection]->(s:Section)-[:ContainsSectionChunk]->(c:Chunk)
@@ -173,6 +172,6 @@ def set_dummy_embeddings() -> dict[str, int]:
         """, {"id": int(chunk_id), "vec": vec})
         updated += 1
 
-    create_vector_index()
+    create_vector_index(conn)
 
     return {"updated": updated}

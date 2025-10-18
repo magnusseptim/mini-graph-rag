@@ -1,4 +1,5 @@
 from __future__ import annotations
+from kuzu import Connection
 from typing import Any, Mapping, Sequence, cast
 from app.core.kuzu import get_conn
 from app.graph.seed import _as_qr
@@ -92,21 +93,19 @@ def semantic_search(
     return out
 
 
-def drop_vector_index_if_exists() -> None:
-    conn = get_conn()
+def drop_vector_index_if_exists(conn: Connection) -> None:
     try:
         # note: no trailing semicolon
-        conn.execute(f"CALL DROP_INDEX('{INDEX_TBL}', '{INDEX_NAME}')")
+        conn.execute(f"CALL DROP_VECTOR_INDEX('{INDEX_TBL}', '{INDEX_NAME}');")
     except Exception:
         pass
 
 
-def create_vector_index() -> None:
+def create_vector_index(conn: Connection) -> None:
     """
     Create the vector index if it does not exist.
     """
-    conn = get_conn()
     try:
-        conn.execute(f"CALL CREATE_VECTOR_INDEX('{INDEX_TBL}', '{INDEX_NAME}', '{INDEX_COL}', metric := 'cosine')")
+        conn.execute(f"CALL CREATE_VECTOR_INDEX('{INDEX_TBL}', '{INDEX_NAME}', '{INDEX_COL}', metric := 'cosine');")
     except Exception:
         pass  # index already exists

@@ -143,18 +143,44 @@ curl -s "http://127.0.0.1:8000/search?q=TOPIC&doc=Kickoff%20Notes&ci=false" | jq
 
 ## Troubleshooting
 
-**Stuck at “Waiting for application startup.”?**  
+### Stuck at “Waiting for application startup.”?
 - Remove local DB artifacts (esp. WAL):  
   `rm -f var/*.kuzu var/*.kuzulog var/*.kuzu.wal var/*.kuzu.tmp`
 - Start dev server excluding DB directory from reload:  
   `uv run uvicorn app.api.routes:app --reload --reload-exclude var/* --port 8000`
 
-### Known issues
+### Vector update error (stale DB)
 
-- In Docker, `/debug/set_dummy_embeddings` can fail with:
-  `Cannot set property vec in table embeddings ... used in one or more indexes.`
-  Locally it seems to work. This is most probably due to updating a vector property while its HNSW index is live.
-  Workarounds: run locally (`make seed-emb`) or seed before creating the index.
+If you see:
+```markdown
+RuntimeError: Runtime exception: Cannot set property vec in table embeddings because it is used in one or more indexes. Try delete and then insert.
+```
+
+it usually means a **stale/obsolete local DB** (with an old vector index) is being reused.
+
+**Fix (safe):**
+1. Stop the server.
+2. Clear local DB artifacts:
+```bash
+make clean-db
+```
+(removes var/*.kuzu*, WAL, tmp files)
+3. Start again and run, in order:
+```bash
+make seed
+make seed-emb   # writes embeddings, then builds the HNSW index
+make semantic
+```
+4. (Optional) Verify indexes:
+```bash
+make indexes
+```
+
+#### Notes
+
+Ensure KUZU_DB_PATH points to your intended DB file. If you mount a directory in Docker, an old DB in that mount can trigger this.
+
+We intentionally don’t create the vector index at startup; it’s created after embeddings are written (by seed-emb or your real embedder).
 
 
 ## License
